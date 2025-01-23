@@ -1,29 +1,3 @@
-interface Player {
-  seat: number;
-  name: string;
-  chips: number;
-}
-
-interface Action {
-  player: string;
-  action: string;
-  amount?: number;
-}
-
-interface Hand {
-  id: string;
-  date: string;
-  blinds: {
-    small: number;
-    big: number;
-  };
-  players: Player[];
-  actions: Action[];
-  heroCards?: string[];
-  board?: string[];
-  pot: number;
-}
-
 export const parseHand = (handText: string): Hand => {
   const lines = handText.split('\n');
   const hand: Partial<Hand> = {
@@ -32,7 +6,7 @@ export const parseHand = (handText: string): Hand => {
   };
 
   // Parse header
-  const headerMatch = lines[0].match(/Hand #(HD\d+): .* \((\$[\d.]+)\/(\$[\d.]+)\) - ([\d/]+ [\d:]+)/);
+  const headerMatch = lines[0].match(/Hand #([\w\d]+): .* \((\$[\d.]+)\/(\$[\d.]+)\) - ([\d/]+ [\d:]+)/);
   if (headerMatch) {
     hand.id = headerMatch[1];
     hand.blinds = {
@@ -44,7 +18,7 @@ export const parseHand = (handText: string): Hand => {
 
   // Parse players
   lines.forEach((line) => {
-    const seatMatch = line.match(/Seat (\d): ([a-f0-9]+) \(\$([\d.]+) in chips\)/);
+    const seatMatch = line.match(/Seat (\d): ([\w\d]+) \(\$([\d.]+) in chips\)/);
     if (seatMatch) {
       hand.players?.push({
         seat: parseInt(seatMatch[1]),
@@ -52,6 +26,27 @@ export const parseHand = (handText: string): Hand => {
         chips: parseFloat(seatMatch[3]),
       });
     }
+
+    // Parse actions
+    const actionMatches = [
+      { regex: /([\w\d]+): calls \$([\d.]+)/, action: 'calls' },
+      { regex: /([\w\d]+): raises \$([\d.]+)/, action: 'raises' },
+      { regex: /([\w\d]+): bets \$([\d.]+)/, action: 'bets' },
+      { regex: /([\w\d]+): folds/, action: 'folds' },
+      { regex: /([\w\d]+): checks/, action: 'checks' },
+      { regex: /([\w\d]+) collected \$([\d.]+)/, action: 'collected' },
+    ];
+
+    actionMatches.forEach(({ regex, action }) => {
+      const match = line.match(regex);
+      if (match) {
+        hand.actions?.push({
+          player: match[1],
+          action: action,
+          amount: match[2] ? parseFloat(match[2]) : undefined,
+        });
+      }
+    });
   });
 
   // Parse hero cards
@@ -74,6 +69,13 @@ export const parseHand = (handText: string): Hand => {
   if (potMatch) {
     hand.pot = parseFloat(potMatch[1]);
   }
+
+  // Add console logs for debugging
+  console.log('Parsed hand:', {
+    id: hand.id,
+    actions: hand.actions,
+    pot: hand.pot
+  });
 
   return hand as Hand;
 };
