@@ -3,43 +3,40 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
     let totalProfit = 0;
     let showdownProfit = 0;
     let nonShowdownProfit = 0;
-    let heroInvolved = false;
-    let reachedShowdown = false;
+    let heroInvested = 0;
 
-    // Check if Hero is in the hand
-    const heroPlayer = hand.players.find(p => p.name === 'Hero');
-    if (!heroPlayer) {
-      return {
-        handId: hand.id,
-        totalProfit: 0,
-        showdownProfit: 0,
-        nonShowdownProfit: 0
-      };
-    }
-
-    // Calculate Hero's investment and returns
+    // Calculate Hero's investments
     hand.actions.forEach(action => {
       if (action.player === 'Hero') {
-        heroInvolved = true;
         if (action.action === 'calls' || action.action === 'raises' || action.action === 'bets') {
+          heroInvested += action.amount || 0;
           totalProfit -= action.amount || 0;
         } else if (action.action === 'collected') {
-          totalProfit += action.amount || 0;
+          const collectedAmount = action.amount || 0;
+          totalProfit += collectedAmount;
+          
+          // If Hero collected money, it's a showdown win
+          // (since non-showdown wins happen when others fold)
+          showdownProfit = collectedAmount - heroInvested;
         }
       }
     });
 
-    // Check if hand reached showdown
-    reachedShowdown = hand.board?.length === 5;
-
-    // Assign profit to showdown or non-showdown category
-    if (heroInvolved) {
-      if (reachedShowdown) {
-        showdownProfit = totalProfit;
-      } else {
-        nonShowdownProfit = totalProfit;
-      }
+    // If Hero invested but didn't collect, it's a loss
+    // If there was no collection action but we have a profit/loss, it's non-showdown
+    if (totalProfit !== 0 && !hand.actions.some(action => 
+      action.player === 'Hero' && action.action === 'collected'
+    )) {
+      nonShowdownProfit = totalProfit;
     }
+
+    console.log('Hand result:', {
+      handId: hand.id,
+      totalProfit,
+      showdownProfit,
+      nonShowdownProfit,
+      heroInvested
+    });
 
     return {
       handId: hand.id,
