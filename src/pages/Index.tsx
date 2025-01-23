@@ -76,8 +76,8 @@ const Index = () => {
           </Card>
         </div>
 
-      {Object.keys(stats).length > 0 && (
-        <div className="grid grid-cols-1 gap-8">
+        {Object.keys(stats).length > 0 && (
+          <div className="grid grid-cols-1 gap-8">
             <Card className="bg-poker-burgundy/20 p-6">
               <h2 className="text-2xl font-semibold mb-4">Player Statistics</h2>
               <div className="overflow-x-auto">
@@ -106,44 +106,45 @@ const Index = () => {
               </div>
             </Card>
 
-          <Card className="bg-poker-burgundy/20 p-6">
-            <h2 className="text-2xl font-semibold mb-4">Hero's Profit/Loss Analysis</h2>
-            <LineChart
-              width={800}
-              height={400}
-              data={cumulativeResults}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hand" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="total"
-                name="Total Profit/Loss"
-                stroke="#4ade80"
-                activeDot={{ r: 8 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="showdown"
-                name="Showdown Profit/Loss"
-                stroke="#60a5fa"
-                activeDot={{ r: 8 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="nonShowdown"
-                name="Non-Showdown Profit/Loss"
-                stroke="#ef4444"
-                activeDot={{ r: 8 }}
-              />
-            </LineChart>
-          </Card>
-        </div>
-      )}
+            <Card className="bg-poker-burgundy/20 p-6">
+              <h2 className="text-2xl font-semibold mb-4">Hero's Profit/Loss Analysis</h2>
+              <LineChart
+                width={800}
+                height={400}
+                data={cumulativeResults}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hand" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="total"
+                  name="Total Profit/Loss"
+                  stroke="#4ade80"
+                  activeDot={{ r: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="showdown"
+                  name="Showdown Profit/Loss"
+                  stroke="#60a5fa"
+                  activeDot={{ r: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="nonShowdown"
+                  name="Non-Showdown Profit/Loss"
+                  stroke="#ef4444"
+                  activeDot={{ r: 8 }}
+                />
+              </LineChart>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
