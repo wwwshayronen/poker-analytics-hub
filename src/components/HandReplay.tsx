@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,21 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     });
     
     const profit = heroCollected - heroInvested;
-    const isShowdown = !!hand.board && hand.board.length > 0;
+    
+    // Determine if the hand went to showdown
+    let isShowdown = !!hand.board && hand.board.length > 0;
+    
+    // Look for showdown actions
+    if (isShowdown) {
+      const showdownActions = hand.actions.filter(
+        action => action.action === 'shows' || action.action === 'mucks'
+      );
+      // If no player showed or mucked cards, it might not be a true showdown
+      // unless the board is complete
+      if (showdownActions.length === 0 && !(hand.board && hand.board.length === 5)) {
+        isShowdown = false;
+      }
+    }
     
     return {
       profit,
@@ -143,7 +156,7 @@ const HandReplay = ({ hand }: HandReplayProps) => {
           </div>
         </div>
         
-        <div className="bg-poker-navy/50 p-4 rounded-lg">
+        <div className="bg-poker-navy/50 p-4 rounded-lg mt-4">
           <p className="text-sm text-gray-300 mb-2">Hand Result:</p>
           <div className="grid grid-cols-2 gap-2">
             <div>

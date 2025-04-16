@@ -1,3 +1,4 @@
+
 export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
   return hands.map(hand => {
     let totalProfit = 0;
@@ -15,6 +16,23 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       }
     });
 
+    // Determine if the hand went to showdown
+    // A hand is considered a showdown if there was a board with cards AND
+    // at least one player showed their cards
+    isShowdown = !!hand.board && hand.board.length > 0;
+    
+    // Look for player showdown actions like "shows" or "mucks"
+    if (isShowdown) {
+      const showdownActions = hand.actions.filter(
+        action => action.action === 'shows' || action.action === 'mucks'
+      );
+      // If no player showed or mucked cards, it might not be a true showdown
+      // but we'll still consider it one if the board is complete (5 cards)
+      if (showdownActions.length === 0 && !(hand.board && hand.board.length === 5)) {
+        isShowdown = false;
+      }
+    }
+
     // Look for Hero collecting money (winning)
     const heroCollected = hand.actions.find(
       action => action.player === 'Hero' && action.action === 'collected'
@@ -24,24 +42,22 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       const collectedAmount = heroCollected.amount || 0;
       totalProfit = collectedAmount - heroInvested;
       
-      // Check if this was a showdown win (by looking at the hand summary)
-      // If there are board cards, it's likely a showdown
-      isShowdown = !!hand.board && hand.board.length > 0;
-      
       if (isShowdown) {
         showdownProfit = totalProfit;
+        nonShowdownProfit = 0;
       } else {
+        showdownProfit = 0;
         nonShowdownProfit = totalProfit;
       }
     } else {
       // Hero didn't collect, so it's a loss
       totalProfit = -heroInvested;
       
-      // If the hand went to showdown (board is present), it's a showdown loss
-      // Otherwise it's a non-showdown loss (Hero folded)
-      if (hand.board && hand.board.length > 0) {
+      if (isShowdown) {
         showdownProfit = -heroInvested;
+        nonShowdownProfit = 0;
       } else {
+        showdownProfit = 0;
         nonShowdownProfit = -heroInvested;
       }
     }
@@ -54,6 +70,8 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       isShowdown,
       hasBoard: !!hand.board && hand.board.length > 0,
       heroCollected: !!heroCollected,
+      boardLength: hand.board ? hand.board.length : 0,
+      hasShowdownActions: hand.actions.some(a => a.action === 'shows' || a.action === 'mucks')
     });
 
     return {
