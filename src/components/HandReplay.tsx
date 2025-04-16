@@ -41,18 +41,26 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     
     const profit = heroCollected - heroInvested;
     
-    // Find any showdown actions in the hand history
-    const hasShows = hand.actions.some(action => action.action === 'shows');
-    const hasMucks = hand.actions.some(action => action.action === 'mucks');
-    const hasShowdownMarker = hand.actions.some(action => action.action === '*** SHOWDOWN ***');
+    // Check for showdown conditions
+    const hasShowdownMarker = hand.actions.some(
+      action => action.action === '*** SHOWDOWN ***'
+    );
+    
+    const hasShows = hand.actions.some(
+      action => action.action === 'shows'
+    );
+    
+    const hasMucks = hand.actions.some(
+      action => action.action === 'mucks'
+    );
     
     // A hand is considered a showdown if:
-    // 1. There is a showdown marker in the actions, OR
-    // 2. At least one player shows their cards AND there's a board, OR
-    // 3. At least one player mucks their cards AND there's a board
+    // 1. There is an explicit SHOWDOWN marker, OR
+    // 2. Any player shows their cards, OR
+    // 3. Any player mucks their cards with a complete board (river)
     const isShowdown = hasShowdownMarker || 
-                      ((hasShows || hasMucks) && !!hand.board && hand.board.length > 0) ||
-                      (!!hand.board && hand.board.length === 5); // Full board is likely showdown
+                      hasShows || 
+                      (hasMucks && !!hand.board && hand.board.length === 5);
     
     return {
       profit,

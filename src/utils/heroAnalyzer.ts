@@ -16,7 +16,13 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       }
     });
 
-    // Find any showdown actions in the hand history
+    // Determine if the hand reached showdown
+    // Look for explicit SHOWDOWN markers
+    const hasShowdownMarker = hand.actions.some(
+      action => action.action === '*** SHOWDOWN ***'
+    );
+    
+    // Check if anyone showed or mucked cards
     const hasShows = hand.actions.some(
       action => action.action === 'shows'
     );
@@ -25,20 +31,15 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       action => action.action === 'mucks'
     );
     
-    // Check for explicit SHOWDOWN text marker
-    const hasShowdownMarker = hand.actions.some(
-      action => action.action === '*** SHOWDOWN ***'
-    );
-    
     // A hand is considered a showdown if:
-    // 1. There is a showdown marker in the actions, OR
-    // 2. At least one player shows their cards AND there's a board, OR
-    // 3. At least one player mucks their cards AND there's a board
+    // 1. There is an explicit SHOWDOWN marker, OR
+    // 2. Any player shows their cards, OR
+    // 3. Any player mucks their cards with a complete board (river)
     isShowdown = hasShowdownMarker || 
-                ((hasShows || hasMucks) && !!hand.board && hand.board.length > 0) || 
-                (!!hand.board && hand.board.length === 5); // Full board is likely showdown
+                hasShows || 
+                (hasMucks && !!hand.board && hand.board.length === 5);
 
-    // Look for Hero collecting money (winning)
+    // Find Hero collecting money (winning)
     const heroCollected = hand.actions.find(
       action => action.player === 'Hero' && action.action === 'collected'
     );

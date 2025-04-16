@@ -51,11 +51,21 @@ export const parseHand = (handText: string): Hand => {
       }
     });
     
-    // Check for section markers
-    if (line.trim() === '*** SHOWDOWN ***') {
+    // Make sure we capture all showdown markers
+    // Check for explicit "*** SHOWDOWN ***" text
+    if (line.includes('*** SHOWDOWN ***')) {
       hand.actions?.push({
         player: '',
         action: '*** SHOWDOWN ***'
+      });
+    }
+    
+    // Additional check for "shows" in summary section
+    const showsSummaryMatch = line.match(/Seat \d+: ([\w\d]+) showed \[(.*)\]/);
+    if (showsSummaryMatch) {
+      hand.actions?.push({
+        player: showsSummaryMatch[1],
+        action: 'shows'
       });
     }
   });
@@ -85,7 +95,7 @@ export const parseHand = (handText: string): Hand => {
   console.log('Parsed hand:', {
     id: hand.id,
     actions: hand.actions?.filter(a => a.action === 'shows' || a.action === 'mucks' || a.action === '*** SHOWDOWN ***'),
-    showdownActions: hand.actions?.some(a => a.action === '*** SHOWDOWN ***'),
+    showdownActions: hand.actions?.some(a => a.action === '*** SHOWDOWN ***' || a.action === 'shows'),
     pot: hand.pot
   });
 
