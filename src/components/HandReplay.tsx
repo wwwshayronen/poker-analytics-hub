@@ -24,6 +24,34 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     }
   };
 
+  // Calculate Hero's result in this hand
+  const calculateHeroResult = () => {
+    let heroInvested = 0;
+    let heroCollected = 0;
+    
+    hand.actions.forEach(action => {
+      if (action.player === 'Hero') {
+        if (action.action === 'calls' || action.action === 'raises' || action.action === 'bets') {
+          heroInvested += action.amount || 0;
+        } else if (action.action === 'collected') {
+          heroCollected += action.amount || 0;
+        }
+      }
+    });
+    
+    const profit = heroCollected - heroInvested;
+    const isShowdown = !!hand.board && hand.board.length > 0;
+    
+    return {
+      profit,
+      isShowdown,
+      heroInvested,
+      heroCollected
+    };
+  };
+  
+  const heroResult = calculateHeroResult();
+  
   if (!hand) return null;
 
   return (
@@ -48,6 +76,19 @@ const HandReplay = ({ hand }: HandReplayProps) => {
             ))}
           </div>
         </div>
+
+        {hand.heroCards && (
+          <div className="bg-poker-navy/50 p-4 rounded-lg">
+            <p className="text-sm text-gray-300 mb-2">Hero's Cards:</p>
+            <div className="flex gap-2 font-mono">
+              {hand.heroCards.map((card, index) => (
+                <span key={index} className="px-2 py-1 bg-poker-gold/20 rounded">
+                  {card}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {hand.board && (
           <div className="bg-poker-navy/50 p-4 rounded-lg">
@@ -99,6 +140,32 @@ const HandReplay = ({ hand }: HandReplayProps) => {
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+        </div>
+        
+        <div className="bg-poker-navy/50 p-4 rounded-lg">
+          <p className="text-sm text-gray-300 mb-2">Hand Result:</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-xs text-gray-400">Result Type:</p>
+              <p className="font-mono">
+                {heroResult.isShowdown ? "Showdown" : "Non-Showdown"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Profit/Loss:</p>
+              <p className={`font-mono ${heroResult.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                ${heroResult.profit.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Hero Invested:</p>
+              <p className="font-mono text-red-400">${heroResult.heroInvested.toFixed(2)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Hero Collected:</p>
+              <p className="font-mono text-green-400">${heroResult.heroCollected.toFixed(2)}</p>
+            </div>
           </div>
         </div>
       </div>

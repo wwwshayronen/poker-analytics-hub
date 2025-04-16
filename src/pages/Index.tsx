@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { parseHand } from '@/utils/handParser';
@@ -119,9 +120,11 @@ const Index = () => {
                   <input 
                     id="folder-upload" 
                     type="file" 
-                    webkitdirectory="true"
-                    directory="true"
+                    // Fix TypeScript error by using the attribute as a property instead
                     multiple
+                    // @ts-ignore - TypeScript doesn't recognize webkitdirectory attribute
+                    webkitdirectory=""
+                    directory=""
                     onChange={handleFileUpload} 
                     className="hidden"
                   />
