@@ -6,27 +6,53 @@ import { calculateHeroResults } from '@/utils/heroAnalyzer';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import HandReplay from '@/components/HandReplay';
 import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { FolderUp, FileUp } from "lucide-react";
 
 const Index = () => {
   const [hands, setHands] = useState<Hand[]>([]);
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [heroResults, setHeroResults] = useState<HeroResult[]>([]);
   const [selectedHand, setSelectedHand] = useState<Hand | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const text = await file.text();
-      const handTexts = text.split('\n\n\n');
-      const parsedHands = handTexts.map(parseHand);
-      setHands(parsedHands);
-      setStats(calculatePlayerStats(parsedHands));
-      setHeroResults(calculateHeroResults(parsedHands));
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsLoading(true);
+    const allHands: Hand[] = [];
+    
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const text = await file.text();
+        const handTexts = text.split('\n\n\n');
+        
+        // Filter out empty entries
+        const validHandTexts = handTexts.filter(handText => handText.trim().length > 0);
+        const parsedHands = validHandTexts.map(parseHand);
+        allHands.push(...parsedHands);
+      }
+      
+      setHands(allHands);
+      setStats(calculatePlayerStats(allHands));
+      setHeroResults(calculateHeroResults(allHands));
+      
       toast({
         title: "Success",
-        description: `Loaded ${parsedHands.length} hands successfully`,
+        description: `Loaded ${allHands.length} hands from ${files.length} file(s)`,
       });
+    } catch (error) {
+      console.error("Error processing files:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process hand history files",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,16 +88,52 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="bg-poker-burgundy/20 p-6 md:col-span-3">
             <h2 className="text-2xl font-semibold mb-4">Upload Hands</h2>
-            <input
-              type="file"
-              onChange={handleFileUpload}
-              className="block w-full text-sm text-gray-300
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-full file:border-0
-                file:text-sm file:font-semibold
-                file:bg-poker-gold file:text-poker-navy
-                hover:file:bg-poker-gold/80"
-            />
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <label 
+                  htmlFor="file-upload" 
+                  className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-gray-600 cursor-pointer bg-poker-burgundy/10 hover:bg-poker-burgundy/30 transition-all"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <FileUp className="w-8 h-8 mb-2 text-poker-gold" />
+                    <p className="text-sm text-gray-300">Upload single file</p>
+                  </div>
+                  <input 
+                    id="file-upload" 
+                    type="file" 
+                    onChange={handleFileUpload} 
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              
+              <div className="flex-1">
+                <label 
+                  htmlFor="folder-upload" 
+                  className="flex flex-col items-center justify-center w-full h-32 rounded-lg border-2 border-dashed border-gray-600 cursor-pointer bg-poker-burgundy/10 hover:bg-poker-burgundy/30 transition-all"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <FolderUp className="w-8 h-8 mb-2 text-poker-gold" />
+                    <p className="text-sm text-gray-300">Upload multiple files</p>
+                  </div>
+                  <input 
+                    id="folder-upload" 
+                    type="file" 
+                    webkitdirectory="true"
+                    directory="true"
+                    multiple
+                    onChange={handleFileUpload} 
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+            
+            {isLoading && (
+              <div className="mt-4 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-poker-gold"></div>
+              </div>
+            )}
           </Card>
 
           <Card className="bg-poker-burgundy/20 p-6">

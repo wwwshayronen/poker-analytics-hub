@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ const HandReplay = ({ hand }: HandReplayProps) => {
                     : 'bg-poker-burgundy/40'
                 }`}
               >
-                {player.name} ({player.position})
+                {player.name}
               </span>
             ))}
           </div>
