@@ -24,7 +24,7 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     }
   };
 
-  // Calculate Hero's result in this hand
+  // Calculate Hero's result in this hand - matching the logic in heroAnalyzer.ts
   const calculateHeroResult = () => {
     let heroInvested = 0;
     let heroCollected = 0;
@@ -41,26 +41,18 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     
     const profit = heroCollected - heroInvested;
     
-    // Check for showdown conditions
+    // Check for showdown indicators - matching heroAnalyzer.ts logic exactly
     const hasShowdownMarker = hand.actions.some(
       action => action.action === '*** SHOWDOWN ***'
     );
     
-    const hasShows = hand.actions.some(
-      action => action.action === 'shows'
-    );
-    
-    const hasMucks = hand.actions.some(
-      action => action.action === 'mucks'
+    const heroShowed = hand.actions.some(
+      action => action.action === 'shows' && action.player === 'Hero'
     );
     
     // A hand is considered a showdown if:
-    // 1. There is an explicit SHOWDOWN marker, OR
-    // 2. Any player shows their cards, OR
-    // 3. Any player mucks their cards with a complete board (river)
-    const isShowdown = hasShowdownMarker || 
-                      hasShows || 
-                      (hasMucks && !!hand.board && hand.board.length === 5);
+    // There is an explicit SHOWDOWN marker OR Hero showed cards
+    const isShowdown = hasShowdownMarker || heroShowed;
     
     return {
       profit,

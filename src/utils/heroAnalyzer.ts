@@ -16,56 +16,36 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       }
     });
 
-    // Determine if the hand reached showdown
+    // Check for showdown indicators - SUMMARY section is most reliable
+    // First try to find explicit shows in the summary section
+    const summaryShows = hand.actions.some(
+      action => action.action === 'shows' && action.player === 'Hero'
+    );
+    
     // Look for explicit SHOWDOWN markers
     const hasShowdownMarker = hand.actions.some(
       action => action.action === '*** SHOWDOWN ***'
     );
     
-    // Check if anyone showed or mucked cards
-    const hasShows = hand.actions.some(
-      action => action.action === 'shows'
-    );
-    
-    const hasMucks = hand.actions.some(
-      action => action.action === 'mucks'
-    );
-    
     // A hand is considered a showdown if:
-    // 1. There is an explicit SHOWDOWN marker, OR
-    // 2. Any player shows their cards, OR
-    // 3. Any player mucks their cards with a complete board (river)
-    isShowdown = hasShowdownMarker || 
-                hasShows || 
-                (hasMucks && !!hand.board && hand.board.length === 5);
+    // There is an explicit SHOWDOWN marker OR Hero showed cards
+    isShowdown = hasShowdownMarker || summaryShows;
 
-    // Find Hero collecting money (winning)
+    // Find if Hero collected money (winning)
     const heroCollected = hand.actions.find(
       action => action.player === 'Hero' && action.action === 'collected'
     );
     
-    if (heroCollected) {
-      const collectedAmount = heroCollected.amount || 0;
-      totalProfit = collectedAmount - heroInvested;
-      
-      if (isShowdown) {
-        showdownProfit = totalProfit;
-        nonShowdownProfit = 0;
-      } else {
-        showdownProfit = 0;
-        nonShowdownProfit = totalProfit;
-      }
+    const collectedAmount = heroCollected ? (heroCollected.amount || 0) : 0;
+    totalProfit = collectedAmount - heroInvested;
+    
+    // Assign profit to showdown or non-showdown category based on whether it was a showdown
+    if (isShowdown) {
+      showdownProfit = totalProfit;
+      nonShowdownProfit = 0;
     } else {
-      // Hero didn't collect, so it's a loss
-      totalProfit = -heroInvested;
-      
-      if (isShowdown) {
-        showdownProfit = -heroInvested;
-        nonShowdownProfit = 0;
-      } else {
-        showdownProfit = 0;
-        nonShowdownProfit = -heroInvested;
-      }
+      showdownProfit = 0;
+      nonShowdownProfit = totalProfit;
     }
 
     console.log('Hand result for #' + hand.id + ':', {
@@ -73,13 +53,14 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       showdownProfit,
       nonShowdownProfit,
       heroInvested,
+      collectedAmount,
       isShowdown,
-      hasBoard: !!hand.board && hand.board.length > 0,
-      heroCollected: !!heroCollected,
+      hasShowdown: hasShowdownMarker,
+      summaryShows,
       boardLength: hand.board ? hand.board.length : 0,
-      hasShows,
-      hasMucks,
-      hasShowdownMarker
+      handActions: hand.actions
+        .filter(a => ['shows', 'collected', '*** SHOWDOWN ***'].includes(a.action))
+        .map(a => `${a.player} ${a.action} ${a.amount || ''}`)
     });
 
     return {

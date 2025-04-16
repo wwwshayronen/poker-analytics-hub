@@ -60,13 +60,24 @@ export const parseHand = (handText: string): Hand => {
       });
     }
     
-    // Additional check for "shows" in summary section
+    // Additional check for shows in summary section - this is critical for showdown detection
     const showsSummaryMatch = line.match(/Seat \d+: ([\w\d]+) showed \[(.*)\]/);
     if (showsSummaryMatch) {
       hand.actions?.push({
         player: showsSummaryMatch[1],
         action: 'shows'
       });
+    }
+    
+    // Check for won/lost in summary - additional indicator for showdown
+    const wonLostMatch = line.match(/Seat \d+: ([\w\d]+) (won|lost) .* with /);
+    if (wonLostMatch) {
+      if (!hand.actions?.some(a => a.action === '*** SHOWDOWN ***')) {
+        hand.actions?.push({
+          player: '',
+          action: '*** SHOWDOWN ***'
+        });
+      }
     }
   });
 
@@ -91,11 +102,15 @@ export const parseHand = (handText: string): Hand => {
     hand.pot = parseFloat(potMatch[1]);
   }
 
-  // Add console logs for debugging
+  // Enhanced debugging to verify showdown detection
   console.log('Parsed hand:', {
     id: hand.id,
-    actions: hand.actions?.filter(a => a.action === 'shows' || a.action === 'mucks' || a.action === '*** SHOWDOWN ***'),
-    showdownActions: hand.actions?.some(a => a.action === '*** SHOWDOWN ***' || a.action === 'shows'),
+    showdownActions: hand.actions?.filter(a => a.action === 'shows' || a.action === 'mucks' || a.action === '*** SHOWDOWN ***'),
+    hasShowdown: hand.actions?.some(a => a.action === '*** SHOWDOWN ***'),
+    hasShows: hand.actions?.some(a => a.action === 'shows'),
+    hasMucks: hand.actions?.some(a => a.action === 'mucks'),
+    hasHeroCollected: hand.actions?.some(a => a.player === 'Hero' && a.action === 'collected'),
+    heroAmount: hand.actions?.find(a => a.player === 'Hero' && a.action === 'collected')?.amount,
     pot: hand.pot
   });
 
