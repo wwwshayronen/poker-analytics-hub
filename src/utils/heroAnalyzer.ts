@@ -16,22 +16,27 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       }
     });
 
-    // Determine if the hand went to showdown
-    // A hand is considered a showdown if there was a board with cards AND
-    // at least one player showed their cards
-    isShowdown = !!hand.board && hand.board.length > 0;
+    // Find any showdown actions in the hand history
+    const hasShows = hand.actions.some(
+      action => action.action === 'shows'
+    );
     
-    // Look for player showdown actions like "shows" or "mucks"
-    if (isShowdown) {
-      const showdownActions = hand.actions.filter(
-        action => action.action === 'shows' || action.action === 'mucks'
-      );
-      // If no player showed or mucked cards, it might not be a true showdown
-      // but we'll still consider it one if the board is complete (5 cards)
-      if (showdownActions.length === 0 && !(hand.board && hand.board.length === 5)) {
-        isShowdown = false;
-      }
-    }
+    const hasMucks = hand.actions.some(
+      action => action.action === 'mucks'
+    );
+    
+    // Check for explicit SHOWDOWN text marker
+    const hasShowdownMarker = hand.actions.some(
+      action => action.action === '*** SHOWDOWN ***'
+    );
+    
+    // A hand is considered a showdown if:
+    // 1. There is a showdown marker in the actions, OR
+    // 2. At least one player shows their cards AND there's a board, OR
+    // 3. At least one player mucks their cards AND there's a board
+    isShowdown = hasShowdownMarker || 
+                ((hasShows || hasMucks) && !!hand.board && hand.board.length > 0) || 
+                (!!hand.board && hand.board.length === 5); // Full board is likely showdown
 
     // Look for Hero collecting money (winning)
     const heroCollected = hand.actions.find(
@@ -71,7 +76,9 @@ export const calculateHeroResults = (hands: Hand[]): HeroResult[] => {
       hasBoard: !!hand.board && hand.board.length > 0,
       heroCollected: !!heroCollected,
       boardLength: hand.board ? hand.board.length : 0,
-      hasShowdownActions: hand.actions.some(a => a.action === 'shows' || a.action === 'mucks')
+      hasShows,
+      hasMucks,
+      hasShowdownMarker
     });
 
     return {

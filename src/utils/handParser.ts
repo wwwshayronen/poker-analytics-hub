@@ -1,3 +1,4 @@
+
 export const parseHand = (handText: string): Hand => {
   const lines = handText.split('\n');
   const hand: Partial<Hand> = {
@@ -35,6 +36,8 @@ export const parseHand = (handText: string): Hand => {
       { regex: /([\w\d]+): folds/, action: 'folds' },
       { regex: /([\w\d]+): checks/, action: 'checks' },
       { regex: /([\w\d]+) collected \$([\d.]+)/, action: 'collected' },
+      { regex: /([\w\d]+): shows \[(.*)\]/, action: 'shows' },
+      { regex: /([\w\d]+): mucks/, action: 'mucks' },
     ];
 
     actionMatches.forEach(({ regex, action }) => {
@@ -47,6 +50,14 @@ export const parseHand = (handText: string): Hand => {
         });
       }
     });
+    
+    // Check for section markers
+    if (line.trim() === '*** SHOWDOWN ***') {
+      hand.actions?.push({
+        player: '',
+        action: '*** SHOWDOWN ***'
+      });
+    }
   });
 
   // Parse hero cards
@@ -73,7 +84,8 @@ export const parseHand = (handText: string): Hand => {
   // Add console logs for debugging
   console.log('Parsed hand:', {
     id: hand.id,
-    actions: hand.actions,
+    actions: hand.actions?.filter(a => a.action === 'shows' || a.action === 'mucks' || a.action === '*** SHOWDOWN ***'),
+    showdownActions: hand.actions?.some(a => a.action === '*** SHOWDOWN ***'),
     pot: hand.pot
   });
 

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,20 +41,18 @@ const HandReplay = ({ hand }: HandReplayProps) => {
     
     const profit = heroCollected - heroInvested;
     
-    // Determine if the hand went to showdown
-    let isShowdown = !!hand.board && hand.board.length > 0;
+    // Find any showdown actions in the hand history
+    const hasShows = hand.actions.some(action => action.action === 'shows');
+    const hasMucks = hand.actions.some(action => action.action === 'mucks');
+    const hasShowdownMarker = hand.actions.some(action => action.action === '*** SHOWDOWN ***');
     
-    // Look for showdown actions
-    if (isShowdown) {
-      const showdownActions = hand.actions.filter(
-        action => action.action === 'shows' || action.action === 'mucks'
-      );
-      // If no player showed or mucked cards, it might not be a true showdown
-      // unless the board is complete
-      if (showdownActions.length === 0 && !(hand.board && hand.board.length === 5)) {
-        isShowdown = false;
-      }
-    }
+    // A hand is considered a showdown if:
+    // 1. There is a showdown marker in the actions, OR
+    // 2. At least one player shows their cards AND there's a board, OR
+    // 3. At least one player mucks their cards AND there's a board
+    const isShowdown = hasShowdownMarker || 
+                      ((hasShows || hasMucks) && !!hand.board && hand.board.length > 0) ||
+                      (!!hand.board && hand.board.length === 5); // Full board is likely showdown
     
     return {
       profit,
